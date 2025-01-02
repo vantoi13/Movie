@@ -302,3 +302,4 @@ C:\donet\MvcMovie\obj\Debug\net8.0\MvcMovie.csproj.AssemblyReference.cache
 C:\donet\MvcMovie\obj\Debug\net8.0\MvcMovie.csproj.Up2Date
 C:\donet\MvcMovie\bin\Debug\net8.0\AutoMapper.dll
 C:\donet\MvcMovie\bin\Debug\net8.0\AutoMapper.Extensions.Microsoft.DependencyInjection.dll
+C:\donet\MvcMovie\obj\Debug\net8.0\MvcMovie.sourcelink.json
