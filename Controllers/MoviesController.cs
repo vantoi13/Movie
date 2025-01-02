@@ -8,31 +8,24 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MvcMovie.Data;
 using MvcMovie.Models;
+using MvcMovie.Services;
 
 namespace MvcMovie.Controllers
 {
     public class MoviesController : Controller
     {
-        private readonly MvcMovieContext _context;
-        private readonly IMapper _mapper;
+       public readonly IMovieService _movieService;
 
-        public MoviesController(MvcMovieContext context, IMapper mapper)
+        public MoviesController(IMovieService movieService)
         {
-            _context = context;
-            _mapper = mapper;
+            _movieService = movieService;
         }
 
         // GET: Movies
-        public async Task<IActionResult> Index(string SearchString)
+        public async Task<IActionResult> Index( )
         {
-            ViewData["CurenFilter"] = SearchString;
-            var movies = from m in _context.Movie
-            select m;
-            if(!string.IsNullOrEmpty(SearchString))
-            {
-                movies =movies.Where(x => x.Title != null && x.Title.Contains(SearchString));
-            }
-            return View(_mapper.Map<IEnumerable<MovieViewModel>>(await movies.ToListAsync()));
+           return View(await _movieService.GetMovies());
+          
         }
 
         // GET: Movies/Details/5
@@ -43,14 +36,13 @@ namespace MvcMovie.Controllers
                 return NotFound();
             }
 
-            var movie = await _context.Movie
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var movie = await _movieService.GetMovie(id.Value);
             if (movie == null)
             {
                 return NotFound();
             }
 
-            return View(_mapper.Map<MovieViewModel>(movie));
+            return View(movie);
         }
 
         // GET: Movies/Create
@@ -67,9 +59,9 @@ namespace MvcMovie.Controllers
         public async Task<IActionResult> Create(MovieRequest request)
         {
             if (ModelState.IsValid)
-            {
-                _context.Add(_mapper.Map<Movie>(request));
-                await _context.SaveChangesAsync();
+            {  
+                var result = await _movieService.Create(request);
+                if(result != null)
                 return RedirectToAction(nameof(Index));
             }
             return View(request);
@@ -82,13 +74,13 @@ namespace MvcMovie.Controllers
             {
                 return NotFound();
             }
+             var movie = await _movieService.GetMovie(id.Value);
 
-            var movie = await _context.Movie.FindAsync(id);
             if (movie == null)
             {
                 return NotFound();
             }
-            return View(_mapper.Map<MovieViewModel>(movie));
+            return View(movie);
         }
 
         // POST: Movies/Edit/5
@@ -107,19 +99,14 @@ namespace MvcMovie.Controllers
             {
                 try
                 {
-                    _context.Update(_mapper.Map<Movie>(movieVM));
-                    await _context.SaveChangesAsync();
+                   var result = await _movieService.Update(id, movieVM);
+                   if(result){
+                    return RedirectToAction(nameof(Index));
+                   }
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!MovieExists(movieVM.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return NotFound();
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -134,14 +121,13 @@ namespace MvcMovie.Controllers
                 return NotFound();
             }
 
-            var movie = await _context.Movie
-                .FirstOrDefaultAsync(m => m.Id == id);
+             var movie = await _movieService.GetMovie(id.Value);
             if (movie == null)
             {
                 return NotFound();
             }
 
-            return View(_mapper.Map<MovieViewModel>(movie));
+            return View(movie);
         }
 
         // POST: Movies/Delete/5
@@ -149,19 +135,10 @@ namespace MvcMovie.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var movie = await _context.Movie.FindAsync(id);
-            if (movie != null)
-            {
-                _context.Movie.Remove(movie);
-            }
-
-            await _context.SaveChangesAsync();
+            await _movieService.Delete(id);
             return RedirectToAction(nameof(Index));
         }
 
-        private bool MovieExists(int id)
-        {
-            return _context.Movie.Any(e => e.Id == id);
-        }
+       
     }
 }
